@@ -119,6 +119,11 @@ export function unbindURI(uri: string): WFN {
     throw new Error('Invalid URI: must start with "cpe:/"')
   }
 
+  // Reject null bytes and control characters
+  if (/[\x00-\x1f\x7f]/.test(uri)) {
+    throw new Error('Invalid URI: contains control characters')
+  }
+
   const result = createWFN()
   // Split URI into components (the part after "cpe:/")
   const body = uri.substring(5)

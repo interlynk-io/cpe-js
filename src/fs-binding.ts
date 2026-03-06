@@ -90,6 +90,11 @@ export function unbindFormattedString(fs: string): WFN {
     throw new Error(`Invalid formatted string: must start with "cpe:2.3:"`)
   }
 
+  // Reject null bytes and control characters (except printable ASCII)
+  if (/[\x00-\x1f\x7f]/.test(lower)) {
+    throw new Error('Invalid formatted string: contains control characters')
+  }
+
   // Split off the "cpe:2.3:" prefix, then split remaining by ":"
   // We need exactly 11 components. Colons in values are escaped as \:
   const components = splitFormattedString(lower.substring(8))
