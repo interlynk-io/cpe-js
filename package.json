@@ -33,7 +33,16 @@
     "nist",
     "security"
   ],
+  "author": "Interlynk.io (https://interlynk.io)",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/interlynk-io/cpe-js.git"
+  },
+  "homepage": "https://github.com/interlynk-io/cpe-js#readme",
+  "bugs": {
+    "url": "https://github.com/interlynk-io/cpe-js/issues"
+  },
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
