@@ -62,6 +62,9 @@ function processQuotedChars(s: string): string {
       idx++
     } else {
       // escaped character
+      if (idx + 1 >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       const nextchr = s[idx + 1]
       if (nextchr === '.' || nextchr === '-' || nextchr === '_') {
         // period, hyphen and underscore pass through unharmed
@@ -152,6 +155,9 @@ function addQuoting(s: string): string {
     const c = s[idx]
     if (c === '\\') {
       // already escaped - keep it
+      if (idx + 1 >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       result += c + s[idx + 1]
       idx += 2
     } else if (c === '*' || c === '?') {

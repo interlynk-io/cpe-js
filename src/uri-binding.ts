@@ -80,6 +80,9 @@ function transformForURI(s: string): string {
     }
     if (c === '\\') {
       idx++
+      if (idx >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       const nxtChar = s[idx]
       const encoded = PCT_ENCODE_MAP[nxtChar]
       result += encoded !== undefined ? encoded : '%' + nxtChar.charCodeAt(0).toString(16)
