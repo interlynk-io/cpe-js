@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPE Playground</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e1e4e8; min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #161b22; border-radius: 8px; padding: 3px; }
+  .tab { flex: 1; padding: 8px 12px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: #8b949e; transition: all .15s; border: none; background: none; }
+  .tab.active { background: #21262d; color: #e1e4e8; }
+  .tab:hover:not(.active) { color: #c9d1d9; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: #8b949e; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  input, select { width: 100%; padding: 8px 10px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #e1e4e8; font-size: 14px; font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; outline: none; transition: border-color .15s; }
+  input:focus, select:focus { border-color: #58a6ff; }
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  .row { display: flex; gap: 12px; }
+  .row > .field { flex: 1; }
+  button.primary { padding: 8px 20px; background: #238636; border: 1px solid #2ea043; color: #fff; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+  button.primary:hover { background: #2ea043; }
+  .output-area { margin-top: 20px; }
+  .cpe-string { background: #0d1117; border: 1px solid #238636; border-radius: 6px; padding: 10px 14px; font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 14px; color: #3fb950; word-break: break-all; margin-bottom: 12px; cursor: pointer; }
+  .error-box { background: #1c0d12; border: 1px solid #f8514930; border-radius: 6px; padding: 10px 14px; color: #f85149; font-size: 13px; }
+  .component-grid { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; }
+  .component-grid .ck { color: #8b949e; font-size: 12px; text-align: right; padding-top: 2px; }
+  .component-grid .cv { font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 13px; padding: 2px 0; }
+  .cv.any-val { color: #58a6ff; }
+  .cv.na-val { color: #f0883e; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .tag.ok { background: #0d3117; color: #3fb950; }
+  .tag.err { background: #3d1117; color: #f85149; }
+  .tag.info { background: #0c2d6b; color: #58a6ff; }
+  .tag.superset { background: #0d3117; color: #3fb950; }
+  .tag.subset { background: #0c2d6b; color: #58a6ff; }
+  .tag.equal { background: #1c1d2e; color: #d2a8ff; }
+  .tag.disjoint { background: #3d1117; color: #f85149; }
+  .tag.undefined { background: #21262d; color: #8b949e; }
+  .match-grid { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin-top: 12px; }
+  .match-grid .mk { color: #8b949e; font-size: 12px; text-align: right; padding-top: 3px; }
+  .match-grid .mv { font-size: 13px; padding: 2px 0; }
+  hr { border: none; border-top: 1px solid #21262d; margin: 12px 0; }
+  .quick-examples { margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .quick-examples span { font-size: 12px; color: #8b949e; }
+  .quick-ex { font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 11px; color: #58a6ff; cursor: pointer; background: none; border: none; padding: 0; }
+  .quick-ex:hover { text-decoration: underline; }
+  .note { font-size: 12px; color: #8b949e; margin-bottom: 12px; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .checkbox-row input[type="checkbox"] { width: auto; }
+  .checkbox-row label { font-size: 13px; color: #c9d1d9; text-transform: none; letter-spacing: 0; margin-bottom: 0; }
+  .result-header { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>CPE Playground</h1>
+  <p class="subtitle">Parse, build, validate, and match Common Platform Enumeration names</p>
+
+  <div class="tabs" id="tab-bar"></div>
+
+  <!-- Parse Tab -->
+  <div class="panel active" id="tab-parse">
+    <div class="quick-examples" id="parse-examples"></div>
+    <div class="field">
+      <label>CPE String</label>
+      <input type="text" id="parse-input" placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*" autocomplete="off" spellcheck="false">
+    </div>
+    <button class="primary" id="parse-btn">Parse</button>
+    <div class="output-area" id="parse-output"></div>
+  </div>
+
+  <!-- Build Tab -->
+  <div class="panel" id="tab-build">
+    <div class="row">
+      <div class="field">
+        <label>Part</label>
+        <select id="build-part">
+          <option value="a">a - Application</option>
+          <option value="o">o - Operating System</option>
+          <option value="h">h - Hardware</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Vendor</label>
+        <input type="text" id="build-vendor" placeholder="microsoft">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Product</label>
+        <input type="text" id="build-product" placeholder="internet_explorer">
+      </div>
+      <div class="field">
+        <label>Version</label>
+        <input type="text" id="build-version" placeholder="8.0.6001">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Update</label>
+        <input type="text" id="build-update" placeholder="* (any)">
+      </div>
+      <div class="field">
+        <label>Edition</label>
+        <input type="text" id="build-edition" placeholder="* (any)">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Language</label>
+        <input type="text" id="build-language" placeholder="* (any)">
+      </div>
+      <div class="field">
+        <label>SW Edition</label>
+        <input type="text" id="build-swEdition" placeholder="* (any)">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Target SW</label>
+        <input type="text" id="build-targetSw" placeholder="* (any)">
+      </div>
+      <div class="field">
+        <label>Target HW</label>
+        <input type="text" id="build-targetHw" placeholder="* (any)">
+      </div>
+    </div>
+    <div class="field">
+      <label>Other</label>
+      <input type="text" id="build-other" placeholder="* (any)">
+    </div>
+    <button class="primary" id="build-btn">Build</button>
+    <div class="output-area" id="build-output"></div>
+  </div>
+
+  <!-- Validate Tab -->
+  <div class="panel" id="tab-validate">
+    <div class="quick-examples" id="validate-examples"></div>
+    <div class="field">
+      <label>CPE String</label>
+      <input type="text" id="validate-input" placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="validate-dict">
+      <label for="validate-dict">Dictionary-strict mode (NISTIR 7697)</label>
+    </div>
+    <button class="primary" id="validate-btn">Validate</button>
+    <div class="output-area" id="validate-output"></div>
+  </div>
+
+  <!-- Match Tab -->
+  <div class="panel" id="tab-match">
+    <div class="quick-examples" id="match-examples"></div>
+    <div class="field">
+      <label>Source CPE</label>
+      <input type="text" id="match-source" placeholder="cpe:2.3:a:microsoft:internet_explorer:8.*:*:*:*:*:*:*:*" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>Target CPE</label>
+      <input type="text" id="match-target" placeholder="cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*" autocomplete="off" spellcheck="false">
+    </div>
+    <button class="primary" id="match-btn">Compare</button>
+    <div class="output-area" id="match-output"></div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  parse, encode, encodeURI, fromParts, validate, validateAsDict, validateString,
+  compare, compareWFNs, isSuperset, isSubset, isEqual, isDisjoint,
+  partName, displayName, attributeLabel,
+  ANY, NA, ATTRIBUTES, Relation, createWFN, val
+} from './src/index.ts';
+
+// --- Helpers ---
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'className') e.className = v;
+    else if (k === 'textContent') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (typeof c === 'string') e.appendChild(document.createTextNode(c));
+    else if (c) e.appendChild(c);
+  }
+  return e;
+}
+
+function clear(container) { while (container.firstChild) container.removeChild(container.firstChild); }
+
+function avDisplay(v) {
+  if (v === ANY) return { text: 'ANY', cls: 'any-val' };
+  if (v === NA) return { text: 'NA', cls: 'na-val' };
+  return { text: String(v), cls: '' };
+}
+
+function relationTag(rel) {
+  const map = {
+    SUPERSET: 'superset', SUBSET: 'subset', EQUAL: 'equal',
+    DISJOINT: 'disjoint', UNDEFINED: 'undefined'
+  };
+  return el('span', { className: `tag ${map[rel] || 'undefined'}`, textContent: rel });
+}
+
+// --- Tab setup ---
+const tabDefs = [
+  { id: 'parse', label: 'Parse' },
+  { id: 'build', label: 'Build' },
+  { id: 'validate', label: 'Validate' },
+  { id: 'match', label: 'Match' },
+];
+const tabBar = document.getElementById('tab-bar');
+tabDefs.forEach(({ id, label }) => {
+  const btn = el('button', { className: `tab ${id === 'parse' ? 'active' : ''}`, textContent: label });
+  btn.dataset.tab = id;
+  btn.addEventListener('click', () => {
+    tabBar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+  });
+  tabBar.appendChild(btn);
+});
+
+// --- Parse Tab ---
+const parseExamples = [
+  ['IE 8', 'cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*'],
+  ['Log4j', 'cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*'],
+  ['Linux kernel', 'cpe:2.3:o:linux:linux_kernel:5.15.0:*:*:*:*:*:*:*'],
+  ['Cisco HW', 'cpe:2.3:h:cisco:catalyst_6500:*:*:*:*:*:*:*:*'],
+  ['URI format', 'cpe:/a:hp:insight_diagnostics:7.4.0.1570:-:~~online~win2003~x64~'],
+  ['Wildcards', 'cpe:2.3:a:microsoft:internet_explorer:8.*:sp?:*:*:*:*:*:*'],
+];
+const parseExContainer = document.getElementById('parse-examples');
+parseExContainer.appendChild(el('span', null, 'Try:'));
+parseExamples.forEach(([label, cpe]) => {
+  const btn = el('button', { className: 'quick-ex', textContent: label });
+  btn.addEventListener('click', () => { document.getElementById('parse-input').value = cpe; doParse(); });
+  parseExContainer.appendChild(btn);
+});
+
+function doParse() {
+  const input = document.getElementById('parse-input').value.trim();
+  const out = document.getElementById('parse-output');
+  clear(out);
+  if (!input) return;
+  try {
+    const wfn = parse(input);
+    const fs = encode(wfn);
+
+    // Show formatted string
+    const cpeDiv = el('div', { className: 'cpe-string', textContent: fs });
+    cpeDiv.addEventListener('click', () => navigator.clipboard.writeText(fs));
+    out.appendChild(cpeDiv);
+
+    // Show display name
+    const name = displayName(wfn);
+    if (name) out.appendChild(el('div', { className: 'note' }, partName(wfn) + ': ' + name));
+
+    // Show URI encoding
+    try {
+      const uri = encodeURI(wfn);
+      out.appendChild(el('div', { className: 'note' }, 'URI: ' + uri));
+    } catch (_) {}
+
+    // Show attributes grid
+    const grid = el('div', { className: 'component-grid' });
+    for (const attr of ATTRIBUTES) {
+      const v = wfn[attr];
+      const d = avDisplay(v);
+      grid.appendChild(el('div', { className: 'ck', textContent: attributeLabel(attr) }));
+      grid.appendChild(el('div', { className: `cv ${d.cls}`, textContent: d.text }));
+    }
+    out.appendChild(grid);
+  } catch (e) {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('span', { className: 'tag err', textContent: 'PARSE ERROR' }));
+    box.appendChild(document.createTextNode(' ' + e.message));
+    out.appendChild(box);
+  }
+}
+
+document.getElementById('parse-btn').addEventListener('click', doParse);
+document.getElementById('parse-input').addEventListener('keydown', e => { if (e.key === 'Enter') doParse(); });
+
+// --- Build Tab ---
+const buildFields = ['vendor', 'product', 'version', 'update', 'edition', 'language', 'swEdition', 'targetSw', 'targetHw', 'other'];
+
+function doBuild() {
+  const out = document.getElementById('build-output');
+  clear(out);
+  try {
+    const wfn = createWFN();
+    wfn.part = document.getElementById('build-part').value;
+    for (const f of buildFields) {
+      const v = document.getElementById('build-' + f).value.trim();
+      if (v) wfn[f] = val(v);
+    }
+    const fs = encode(wfn);
+    const cpeDiv = el('div', { className: 'cpe-string', textContent: fs });
+    cpeDiv.addEventListener('click', () => navigator.clipboard.writeText(fs));
+    out.appendChild(cpeDiv);
+    out.appendChild(el('div', { className: 'note' }, 'Click to copy'));
+
+    const errors = validate(wfn);
+    if (errors.length > 0) {
+      const box = el('div', { className: 'error-box' });
+      box.appendChild(el('div', { style: 'margin-bottom:6px' }, el('span', { className: 'tag err', textContent: 'VALIDATION WARNINGS' })));
+      errors.forEach(err => {
+        const row = el('div', { style: 'margin-bottom:4px;font-size:12px' });
+        row.appendChild(el('strong', null, err.attribute));
+        row.appendChild(document.createTextNode(': ' + err.message));
+        box.appendChild(row);
+      });
+      out.appendChild(box);
+    }
+  } catch (e) {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('span', { className: 'tag err', textContent: 'BUILD ERROR' }));
+    box.appendChild(document.createTextNode(' ' + e.message));
+    out.appendChild(box);
+  }
+}
+
+document.getElementById('build-btn').addEventListener('click', doBuild);
+
+// --- Validate Tab ---
+const validateExamples = [
+  ['valid IE', 'cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*'],
+  ['valid Linux', 'cpe:2.3:o:linux:linux_kernel:5.15.0:*:*:*:*:*:*:*'],
+  ['dict entry', 'cpe:2.3:a:apache:log4j:2.14.1:-:-:en:*:*:*:*'],
+  ['bad format', 'cpe:2.3:a:vendor'],
+  ['invalid', 'not-a-cpe-string'],
+  ['URI', 'cpe:/a:microsoft:internet_explorer:8.0.6001:beta'],
+];
+const valExContainer = document.getElementById('validate-examples');
+valExContainer.appendChild(el('span', null, 'Try:'));
+validateExamples.forEach(([label, cpe]) => {
+  const btn = el('button', { className: 'quick-ex', textContent: label });
+  btn.addEventListener('click', () => { document.getElementById('validate-input').value = cpe; doValidate(); });
+  valExContainer.appendChild(btn);
+});
+
+function doValidate() {
+  const input = document.getElementById('validate-input').value.trim();
+  const dictMode = document.getElementById('validate-dict').checked;
+  const out = document.getElementById('validate-output');
+  clear(out);
+  if (!input) return;
+
+  // First try string-level validation
+  const strErrors = validateString(input);
+  if (strErrors.length > 0) {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('div', { style: 'margin-bottom:6px' }, el('span', { className: 'tag err', textContent: 'INVALID FORMAT' })));
+    strErrors.forEach(err => {
+      box.appendChild(el('div', { style: 'font-size:12px;margin-bottom:4px', textContent: err.message }));
+    });
+    out.appendChild(box);
+
+    // Still try to parse for more info
+    try {
+      const wfn = parse(input);
+      out.appendChild(el('div', { className: 'note', style: 'margin-top:12px' }, 'However, the string was parseable. Showing WFN validation:'));
+      showWFNValidation(wfn, dictMode, out);
+    } catch(_) {}
+    return;
+  }
+
+  // Parse and validate WFN
+  try {
+    const wfn = parse(input);
+    showWFNValidation(wfn, dictMode, out);
+  } catch (e) {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('span', { className: 'tag err', textContent: 'PARSE ERROR' }));
+    box.appendChild(document.createTextNode(' ' + e.message));
+    out.appendChild(box);
+  }
+}
+
+function showWFNValidation(wfn, dictMode, out) {
+  const errors = dictMode ? validateAsDict(wfn) : validate(wfn);
+  if (errors.length === 0) {
+    out.appendChild(el('div', { style: 'margin-bottom:12px' },
+      el('span', { className: 'tag ok', textContent: dictMode ? 'VALID (DICTIONARY)' : 'VALID' })
+    ));
+    const cpeDiv = el('div', { className: 'cpe-string', textContent: encode(wfn) });
+    out.appendChild(cpeDiv);
+    out.appendChild(el('div', { className: 'note' }, partName(wfn) + ': ' + displayName(wfn)));
+  } else {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('div', { style: 'margin-bottom:6px' },
+      el('span', { className: 'tag err', textContent: dictMode ? 'INVALID (DICTIONARY)' : 'INVALID' })
+    ));
+    errors.forEach(err => {
+      const row = el('div', { style: 'margin-bottom:4px;font-size:12px' });
+      row.appendChild(el('span', { className: 'tag info', textContent: err.attribute }));
+      row.appendChild(document.createTextNode(' ' + err.message));
+      if (err.value) row.appendChild(el('span', { style: 'color:#484f58;margin-left:8px' }, `(value: "${err.value}")`));
+      box.appendChild(row);
+    });
+    out.appendChild(box);
+  }
+}
+
+document.getElementById('validate-btn').addEventListener('click', doValidate);
+document.getElementById('validate-input').addEventListener('keydown', e => { if (e.key === 'Enter') doValidate(); });
+
+// --- Match Tab ---
+const matchExamples = [
+  {
+    label: 'Superset (wildcard version)',
+    source: 'cpe:2.3:a:microsoft:internet_explorer:8.*:*:*:*:*:*:*:*',
+    target: 'cpe:2.3:a:microsoft:internet_explorer:8.0.6001:-:-:en\\-us:*:*:*:*'
+  },
+  {
+    label: 'Equal',
+    source: 'cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*',
+    target: 'cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*'
+  },
+  {
+    label: 'Subset',
+    source: 'cpe:2.3:a:microsoft:ie:8.0:sp1:*:*:*:*:*:*',
+    target: 'cpe:2.3:a:microsoft:ie:*:*:*:*:*:*:*:*'
+  },
+  {
+    label: 'Disjoint',
+    source: 'cpe:2.3:a:microsoft:ie:8.0:*:*:*:*:*:*:*',
+    target: 'cpe:2.3:a:adobe:reader:9.0:*:*:*:*:*:*:*'
+  },
+];
+const matchExContainer = document.getElementById('match-examples');
+matchExContainer.appendChild(el('span', null, 'Try:'));
+matchExamples.forEach(ex => {
+  const btn = el('button', { className: 'quick-ex', textContent: ex.label });
+  btn.addEventListener('click', () => {
+    document.getElementById('match-source').value = ex.source;
+    document.getElementById('match-target').value = ex.target;
+    doMatch();
+  });
+  matchExContainer.appendChild(btn);
+});
+
+function doMatch() {
+  const sourceStr = document.getElementById('match-source').value.trim();
+  const targetStr = document.getElementById('match-target').value.trim();
+  const out = document.getElementById('match-output');
+  clear(out);
+  if (!sourceStr || !targetStr) return;
+
+  try {
+    const source = parse(sourceStr);
+    const target = parse(targetStr);
+    const overall = compare(source, target);
+    const perAttr = compareWFNs(source, target);
+
+    // Overall result
+    const header = el('div', { className: 'result-header' });
+    header.appendChild(document.createTextNode('Result: '));
+    header.appendChild(relationTag(overall));
+    out.appendChild(header);
+
+    // Quick boolean checks
+    const checks = el('div', { style: 'margin-bottom:12px;font-size:13px;display:flex;gap:16px;flex-wrap:wrap' });
+    const addCheck = (label, value) => {
+      const c = el('span');
+      c.appendChild(document.createTextNode(label + ': '));
+      c.appendChild(el('span', { style: `color:${value ? '#3fb950' : '#f85149'}`, textContent: value ? 'true' : 'false' }));
+      checks.appendChild(c);
+    };
+    addCheck('isSuperset', isSuperset(source, target));
+    addCheck('isSubset', isSubset(source, target));
+    addCheck('isEqual', isEqual(source, target));
+    addCheck('isDisjoint', isDisjoint(source, target));
+    out.appendChild(checks);
+
+    out.appendChild(el('hr'));
+
+    // Per-attribute results
+    out.appendChild(el('div', { style: 'font-size:12px;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px', textContent: 'Per-attribute comparison' }));
+    const grid = el('div', { className: 'match-grid' });
+    for (const attr of ATTRIBUTES) {
+      const srcVal = avDisplay(source[attr]);
+      const tgtVal = avDisplay(target[attr]);
+      grid.appendChild(el('div', { className: 'mk', textContent: attributeLabel(attr) }));
+      const row = el('div', { className: 'mv' });
+      row.appendChild(el('span', { style: 'color:#8b949e;font-size:12px;font-family:monospace' }, srcVal.text));
+      row.appendChild(document.createTextNode(' vs '));
+      row.appendChild(el('span', { style: 'color:#8b949e;font-size:12px;font-family:monospace' }, tgtVal.text));
+      row.appendChild(document.createTextNode(' '));
+      row.appendChild(relationTag(perAttr[attr]));
+      grid.appendChild(row);
+    }
+    out.appendChild(grid);
+  } catch (e) {
+    const box = el('div', { className: 'error-box' });
+    box.appendChild(el('span', { className: 'tag err', textContent: 'ERROR' }));
+    box.appendChild(document.createTextNode(' ' + e.message));
+    out.appendChild(box);
+  }
+}
+
+document.getElementById('match-btn').addEventListener('click', doMatch);
+document.getElementById('match-source').addEventListener('keydown', e => { if (e.key === 'Enter') doMatch(); });
+document.getElementById('match-target').addEventListener('keydown', e => { if (e.key === 'Enter') doMatch(); });
+</script>
+</body>
+</html>
