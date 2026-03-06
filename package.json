@@ -1,5 +1,5 @@
 {
-  "name": "@interlynk/cpe-js",
+  "name": "@interlynk-io/cpe-js",
   "version": "0.1.0",
   "description": "CPE 2.3 library: parse, encode, validate, and match Common Platform Enumeration names per NIST specifications",
   "type": "module",
