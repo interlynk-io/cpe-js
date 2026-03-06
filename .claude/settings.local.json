@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh run:*)",
+      "Bash(npm install:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git:*)",
+      "Bash(npx vitest:*)",
+      "Bash(PGPASSWORD='lynk_api1234!' psql:*)",
+      "Bash(PGPASSWORD='demo123' psql:*)",
+      "Bash(grep:*)",
+      "Bash(source .env:*)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "Bash(npm test:*)",
+      "WebFetch(domain:productionresultssa3.blob.core.windows.net)",
+      "Bash(npm view:*)",
+      "Bash(npm org:*)"
     ]
   }
 }
