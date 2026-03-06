@@ -1,4 +1,4 @@
-# @interlynk/cpe-js
+# @interlynk-io/cpe-js
 
 A spec-compliant [Common Platform Enumeration (CPE)](https://nvd.nist.gov/products/cpe) parser, encoder, validator, and matcher for JavaScript/TypeScript.
 
@@ -15,13 +15,13 @@ A spec-compliant [Common Platform Enumeration (CPE)](https://nvd.nist.gov/produc
 ## Installation
 
 ```bash
-npm install @interlynk/cpe-js
+npm install @interlynk-io/cpe-js
 ```
 
 ## Quick Start
 
 ```typescript
-import { parse, encode, validate, isSuperset, ANY, NA } from '@interlynk/cpe-js';
+import { parse, encode, validate, isSuperset, ANY, NA } from '@interlynk-io/cpe-js';
 
 // Parse a CPE 2.3 formatted string
 const wfn = parse('cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*');
@@ -50,7 +50,7 @@ console.log(isSuperset(query, target)); // true
 ### Parse CPEs from vulnerability feeds
 
 ```typescript
-import { parse, partName, displayName } from '@interlynk/cpe-js';
+import { parse, partName, displayName } from '@interlynk-io/cpe-js';
 
 const cpe = parse(nvdEntry.cpe23Uri);
 console.log(partName(cpe));    // "Application"
@@ -60,7 +60,7 @@ console.log(displayName(cpe)); // "Microsoft Internet Explorer 8.0.6001 Beta"
 ### Validate user input
 
 ```typescript
-import { parse, validate, validateString } from '@interlynk/cpe-js';
+import { parse, validate, validateString } from '@interlynk-io/cpe-js';
 
 // Quick string-level validation (no full parse)
 const errors = validateString(userInput);
@@ -77,7 +77,7 @@ const wfnErrors = validate(wfn);
 ### Check dictionary acceptance criteria
 
 ```typescript
-import { parse, validateAsDict } from '@interlynk/cpe-js';
+import { parse, validateAsDict } from '@interlynk-io/cpe-js';
 
 // Stricter validation: part, vendor, product must not be ANY or NA; no wildcards
 const wfn = parse('cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:-:en:*:*:*:*');
@@ -88,7 +88,7 @@ const errors = validateAsDict(wfn);
 ### Match CPEs against vulnerability advisories
 
 ```typescript
-import { parse, isSuperset, isSubset, isEqual, matchesAny, compare, Relation } from '@interlynk/cpe-js';
+import { parse, isSuperset, isSubset, isEqual, matchesAny, compare, Relation } from '@interlynk-io/cpe-js';
 
 // Does this advisory apply to this product?
 const advisory = parse('cpe:2.3:a:apache:log4j:2.*:*:*:*:*:*:*:*');
@@ -109,7 +109,7 @@ console.log(matchesAny(advisory, vulnerableCpes)); // true
 ### Build CPEs programmatically
 
 ```typescript
-import { fromParts, setAttribute, encode, val, NA, createWFN } from '@interlynk/cpe-js';
+import { fromParts, setAttribute, encode, val, NA, createWFN } from '@interlynk-io/cpe-js';
 
 // Quick: from the three core fields
 const wfn = fromParts('a', 'apache', 'log4j');
@@ -136,7 +136,7 @@ wfn2.update = val('-');  // NA
 ### Convert between CPE formats
 
 ```typescript
-import { parse, encode, encodeURI } from '@interlynk/cpe-js';
+import { parse, encode, encodeURI } from '@interlynk-io/cpe-js';
 
 // URI -> Formatted String
 const wfn = parse('cpe:/a:microsoft:internet_explorer:8.0.6001:beta');
