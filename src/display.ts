@@ -79,6 +79,7 @@ function formatValue(v: AttributeValue): string | null {
     const c = (v as string)[i]
     if (c === '\\') {
       i++
+      if (i >= (v as string).length) break
       result += (v as string)[i]
     } else {
       result += c

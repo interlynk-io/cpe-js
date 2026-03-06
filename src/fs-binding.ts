@@ -62,6 +62,9 @@ function processQuotedChars(s: string): string {
       idx++
     } else {
       // escaped character
+      if (idx + 1 >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       const nextchr = s[idx + 1]
       if (nextchr === '.' || nextchr === '-' || nextchr === '_') {
         // period, hyphen and underscore pass through unharmed
@@ -85,6 +88,11 @@ export function unbindFormattedString(fs: string): WFN {
   const lower = fs.toLowerCase()
   if (!lower.startsWith('cpe:2.3:')) {
     throw new Error(`Invalid formatted string: must start with "cpe:2.3:"`)
+  }
+
+  // Reject null bytes and control characters (except printable ASCII)
+  if (/[\x00-\x1f\x7f]/.test(lower)) {
+    throw new Error('Invalid formatted string: contains control characters')
   }
 
   // Split off the "cpe:2.3:" prefix, then split remaining by ":"
@@ -152,6 +160,9 @@ function addQuoting(s: string): string {
     const c = s[idx]
     if (c === '\\') {
       // already escaped - keep it
+      if (idx + 1 >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       result += c + s[idx + 1]
       idx += 2
     } else if (c === '*' || c === '?') {

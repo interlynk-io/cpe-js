@@ -80,6 +80,9 @@ function transformForURI(s: string): string {
     }
     if (c === '\\') {
       idx++
+      if (idx >= s.length) {
+        throw new Error('Invalid WFN value: trailing backslash')
+      }
       const nxtChar = s[idx]
       const encoded = PCT_ENCODE_MAP[nxtChar]
       result += encoded !== undefined ? encoded : '%' + nxtChar.charCodeAt(0).toString(16)
@@ -116,10 +119,22 @@ export function unbindURI(uri: string): WFN {
     throw new Error('Invalid URI: must start with "cpe:/"')
   }
 
+  // Reject null bytes and control characters
+  if (/[\x00-\x1f\x7f]/.test(uri)) {
+    throw new Error('Invalid URI: contains control characters')
+  }
+
   const result = createWFN()
   // Split URI into components (the part after "cpe:/")
   const body = uri.substring(5)
+  if (body === '') {
+    throw new Error('Invalid URI: empty body after "cpe:/"')
+  }
   const components = body.split(':')
+
+  if (components.length > 7) {
+    throw new Error(`Invalid URI: expected at most 7 components, got ${components.length}`)
+  }
 
   // Pad to 7 components
   while (components.length < 7) {
