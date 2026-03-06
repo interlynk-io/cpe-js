@@ -96,12 +96,16 @@ export function unbindFormattedString(fs: string): WFN {
   }
 
   // Split off the "cpe:2.3:" prefix, then split remaining by ":"
-  // We need exactly 11 components. Colons in values are escaped as \:
+  // CPE 2.3 spec requires exactly 11 components, but real-world CPEs are
+  // often truncated. Pad missing trailing fields with "*" (ANY).
   const components = splitFormattedString(lower.substring(8))
-  if (components.length !== 11) {
+  if (components.length < 1 || components.length > 11) {
     throw new Error(
-      `Invalid formatted string: expected 11 components after "cpe:2.3:", got ${components.length}`
+      `Invalid formatted string: expected 1-11 components after "cpe:2.3:", got ${components.length}`
     )
+  }
+  while (components.length < 11) {
+    components.push('*')
   }
 
   const wfn = createWFN()

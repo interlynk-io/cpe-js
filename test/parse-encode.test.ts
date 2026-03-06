@@ -36,9 +36,42 @@ describe('parse formatted string', () => {
     expect(wfn.part).toBe('a')
   })
 
+  it('pads missing trailing fields with ANY', () => {
+    const wfn = parse('cpe:2.3:a:lua:lua')
+    expect(wfn.part).toBe('a')
+    expect(wfn.vendor).toBe('lua')
+    expect(wfn.product).toBe('lua')
+    expect(wfn.version).toBe(ANY)
+    expect(wfn.update).toBe(ANY)
+    expect(wfn.edition).toBe(ANY)
+    expect(wfn.language).toBe(ANY)
+    expect(wfn.swEdition).toBe(ANY)
+    expect(wfn.targetSw).toBe(ANY)
+    expect(wfn.targetHw).toBe(ANY)
+    expect(wfn.other).toBe(ANY)
+  })
+
+  it('pads partial CPE with version and update', () => {
+    const wfn = parse('cpe:2.3:a:xmlsoft:libxml2:2.9.2:-')
+    expect(wfn.part).toBe('a')
+    expect(wfn.vendor).toBe('xmlsoft')
+    expect(wfn.product).toBe('libxml2')
+    expect(wfn.version).toBe('2\\.9\\.2')
+    expect(wfn.update).toBe(NA)
+    expect(wfn.edition).toBe(ANY)
+  })
+
+  it('round-trips partial CPE to full form', () => {
+    const wfn = parse('cpe:2.3:a:vendor:product')
+    expect(encode(wfn)).toBe('cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*')
+  })
+
   it('throws on invalid format', () => {
-    expect(() => parse('cpe:2.3:a:vendor')).toThrow()
     expect(() => parse('invalid')).toThrow()
+  })
+
+  it('throws on too many components', () => {
+    expect(() => parse('cpe:2.3:a:v:p:1:2:3:4:5:6:7:8:extra')).toThrow()
   })
 })
 

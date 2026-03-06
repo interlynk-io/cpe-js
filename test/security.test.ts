@@ -273,14 +273,25 @@ describe('SEC-09: Degenerate inputs', () => {
     expect(() => parse('   ')).toThrow()
   })
 
-  it('parse: just the prefix must throw', () => {
-    expect(() => parse('cpe:2.3:')).toThrow()
+  it('parse: just the FS prefix is lenient but URI prefix still throws', () => {
+    // "cpe:2.3:" splits to 1 component (empty string) — lenient padding allows it
+    expect(() => parse('cpe:2.3:')).not.toThrow()
+    // URI binding still rejects empty body
     expect(() => parse('cpe:/')).toThrow()
   })
 
-  it('parse: wrong component count must throw', () => {
-    expect(() => parse('cpe:2.3:a:vendor')).toThrow()
-    expect(() => parse('cpe:2.3:a:vendor:product')).toThrow()
+  it('parse: partial components are padded with ANY', () => {
+    const wfn1 = parse('cpe:2.3:a:vendor')
+    expect(wfn1.vendor).toBe('vendor')
+    expect(wfn1.product).toBe(ANY)
+
+    const wfn2 = parse('cpe:2.3:a:vendor:product')
+    expect(wfn2.product).toBe('product')
+    expect(wfn2.version).toBe(ANY)
+  })
+
+  it('parse: too many components must throw', () => {
+    expect(() => parse('cpe:2.3:a:v:p:1:2:3:4:5:6:7:8:extra')).toThrow()
   })
 })
 
