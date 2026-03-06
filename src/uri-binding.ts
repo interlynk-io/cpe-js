@@ -127,7 +127,14 @@ export function unbindURI(uri: string): WFN {
   const result = createWFN()
   // Split URI into components (the part after "cpe:/")
   const body = uri.substring(5)
+  if (body === '') {
+    throw new Error('Invalid URI: empty body after "cpe:/"')
+  }
   const components = body.split(':')
+
+  if (components.length > 7) {
+    throw new Error(`Invalid URI: expected at most 7 components, got ${components.length}`)
+  }
 
   // Pad to 7 components
   while (components.length < 7) {
