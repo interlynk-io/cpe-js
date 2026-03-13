@@ -15,6 +15,11 @@ describe('validate', () => {
     expect(errors[0].attribute).toBe('part')
   })
 
+  it('accepts language tags with hyphens (e.g. en-us)', () => {
+    const wfn = parse('cpe:2.3:a:microsoft:office:2019:sp1:professional:en-us:*:windows:x64:*')
+    expect(validate(wfn)).toEqual([])
+  })
+
   it('allows logical values for all attributes', () => {
     const wfn = createWFN() // all ANY
     expect(validate(wfn)).toEqual([])
