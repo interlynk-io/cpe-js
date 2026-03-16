@@ -40,9 +40,10 @@ export function validate(wfn: WFN): ValidationError[] {
       continue
     }
 
-    // Language has special validation
+    // Language has special validation (unescape WFN backslash-quoting first)
     if (attr === 'language') {
-      if (!LANGUAGE_RE.test(v)) {
+      const unescaped = v.replace(/\\(.)/g, '$1')
+      if (!LANGUAGE_RE.test(unescaped)) {
         errors.push({
           attribute: attr,
           value: v,
