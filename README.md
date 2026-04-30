@@ -155,7 +155,7 @@ console.log(encodeURI(wfn2));
 
 | Function | Description |
 | -------- | ----------- |
-| `parse(s: string): WFN` | Parse a CPE string (auto-detects 2.3 formatted string vs 2.2 URI). Throws on invalid input. |
+| `parse(s: string, opts?: ParseOptions): WFN` | Parse a CPE string (auto-detects 2.3 formatted string vs 2.2 URI). Throws on invalid input. Preserves case by default; pass `{ preserveCase: false }` to lowercase all attribute values. |
 | `encode(wfn: WFN): string` | Encode a WFN as a CPE 2.3 formatted string. |
 | `encodeURI(wfn: WFN): string` | Encode a WFN as a CPE 2.2 URI. |
 | `fromParts(part, vendor, product): WFN` | Create a WFN from the three core fields. All others default to ANY. |
@@ -245,7 +245,7 @@ Implements the following NIST specifications:
 - **Immutable `setAttribute()`** — returns a new WFN copy, aligning with React/functional patterns.
 - **`parse()` auto-detects format** — no need for callers to pre-classify CPE strings.
 - **Structured validation errors** — `ValidationError[]` with per-attribute details maps directly to UI form validation patterns.
-- **Case normalization on parse** — the spec requires case-insensitive matching (NISTIR 7696 Section 7.3), so we normalize to lowercase at parse time.
+- **Case is preserved on parse** — `parse()` keeps the original case of vendor, product, version, and other free-form attributes so identifier data is not silently altered when round-tripping through your application or storage. The `part` attribute is always normalized to lowercase since the spec defines it as the enum `'a' | 'o' | 'h'`. Matching remains case-insensitive (NISTIR 7696 §7.3) — `compareAttribute` lowercases values at compare time. Pass `parse(s, { preserveCase: false })` for the legacy normalize-everything behavior.
 
 ## Development
 

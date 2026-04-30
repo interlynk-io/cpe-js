@@ -81,24 +81,40 @@ function processQuotedChars(s: string): string {
 }
 
 /**
+ * Options for unbinding a CPE.
+ *
+ * preserveCase (default: true) — keep the case of attribute values as they
+ * appear in the input. When false, all values are lowercased (legacy
+ * behavior). The `part` attribute is always normalized to lowercase
+ * regardless of this flag, since the spec defines it as the enum
+ * 'a' | 'o' | 'h'. Matching remains case-insensitive either way: see
+ * compareAttribute in match.ts.
+ */
+export interface UnbindOptions {
+  preserveCase?: boolean
+}
+
+/**
  * Unbind a CPE 2.3 formatted string to a WFN.
  * Per NISTIR 7695 Section 6.2.3.
  */
-export function unbindFormattedString(fs: string): WFN {
+export function unbindFormattedString(fs: string, opts: UnbindOptions = {}): WFN {
+  const preserveCase = opts.preserveCase !== false
   const lower = fs.toLowerCase()
   if (!lower.startsWith('cpe:2.3:')) {
     throw new Error(`Invalid formatted string: must start with "cpe:2.3:"`)
   }
 
   // Reject null bytes and control characters (except printable ASCII)
-  if (/[\x00-\x1f\x7f]/.test(lower)) {
+  if (/[\x00-\x1f\x7f]/.test(fs)) {
     throw new Error('Invalid formatted string: contains control characters')
   }
 
   // Split off the "cpe:2.3:" prefix, then split remaining by ":"
   // CPE 2.3 spec requires exactly 11 components, but real-world CPEs are
   // often truncated. Pad missing trailing fields with "*" (ANY).
-  const components = splitFormattedString(lower.substring(8))
+  const body = preserveCase ? fs.substring(8) : lower.substring(8)
+  const components = splitFormattedString(body)
   if (components.length < 1 || components.length > 11) {
     throw new Error(
       `Invalid formatted string: expected 1-11 components after "cpe:2.3:", got ${components.length}`
@@ -111,7 +127,11 @@ export function unbindFormattedString(fs: string): WFN {
   const wfn = createWFN()
   const attrs = FS_ATTR_ORDER
   for (let i = 0; i < 11; i++) {
-    ;(wfn as unknown as Record<string, AttributeValue>)[attrs[i]] = unbindValueForFS(components[i])
+    let value = unbindValueForFS(components[i])
+    if (attrs[i] === 'part' && typeof value === 'string') {
+      value = value.toLowerCase()
+    }
+    ;(wfn as unknown as Record<string, AttributeValue>)[attrs[i]] = value
   }
   return wfn
 }

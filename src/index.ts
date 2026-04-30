@@ -16,10 +16,14 @@ export {
 export { createWFN, getAttribute, setAttribute, attributeEntries } from './wfn.js'
 
 // Parse & Encode
-export { parse, encode, encodeURI, fromParts, val, mustParse } from './cpe.js'
+export { parse, encode, encodeURI, fromParts, val, mustParse, type ParseOptions } from './cpe.js'
 
 // Bindings (low-level)
-export { bindToFormattedString, unbindFormattedString } from './fs-binding.js'
+export {
+  bindToFormattedString,
+  unbindFormattedString,
+  type UnbindOptions,
+} from './fs-binding.js'
 export { bindToURI, unbindURI } from './uri-binding.js'
 
 // Validation

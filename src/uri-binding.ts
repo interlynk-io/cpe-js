@@ -7,6 +7,7 @@
 import { ANY, NA, type AttributeValue, type WFN } from './types.js'
 import { createWFN } from './wfn.js'
 import { isAlphaNum } from './utils.js'
+import { type UnbindOptions } from './fs-binding.js'
 
 /**
  * Percent-encoding map for quoted non-alphanumeric characters (Table 6-1).
@@ -113,7 +114,8 @@ function pack(ed: string, swEd: string, tSw: string, tHw: string, oth: string): 
  * Unbind a CPE 2.2 URI to a WFN.
  * Per NISTIR 7695 Section 6.1.3.
  */
-export function unbindURI(uri: string): WFN {
+export function unbindURI(uri: string, opts: UnbindOptions = {}): WFN {
+  const preserveCase = opts.preserveCase !== false
   const lower = uri.toLowerCase()
   if (!lower.startsWith('cpe:/')) {
     throw new Error('Invalid URI: must start with "cpe:/"')
@@ -144,19 +146,23 @@ export function unbindURI(uri: string): WFN {
   const attrs = ['part', 'vendor', 'product', 'version', 'update'] as const
 
   for (let i = 0; i < 5; i++) {
-    ;(result as unknown as Record<string, AttributeValue>)[attrs[i]] = decodeURIComponent_CPE(components[i])
+    let value = decodeURIComponent_CPE(components[i], preserveCase)
+    if (attrs[i] === 'part' && typeof value === 'string') {
+      value = value.toLowerCase()
+    }
+    ;(result as unknown as Record<string, AttributeValue>)[attrs[i]] = value
   }
 
   // Component 6: edition (may be packed)
   const edComponent = components[5] || ''
   if (edComponent === '' || edComponent === '-' || !edComponent.startsWith('~')) {
-    result.edition = decodeURIComponent_CPE(edComponent)
+    result.edition = decodeURIComponent_CPE(edComponent, preserveCase)
   } else {
-    unpack(edComponent, result)
+    unpack(edComponent, result, preserveCase)
   }
 
   // Component 7: language
-  result.language = decodeURIComponent_CPE(components[6] || '')
+  result.language = decodeURIComponent_CPE(components[6] || '', preserveCase)
 
   return result
 }
@@ -164,12 +170,11 @@ export function unbindURI(uri: string): WFN {
 /**
  * Decode a URI component to a WFN attribute value.
  */
-function decodeURIComponent_CPE(s: string): AttributeValue {
+function decodeURIComponent_CPE(s: string, preserveCase: boolean): AttributeValue {
   if (s === '') return ANY
   if (s === '-') return NA
 
-  // Lowercase and decode
-  s = s.toLowerCase()
+  if (!preserveCase) s = s.toLowerCase()
   let result = ''
   let idx = 0
   let embedded = false
@@ -192,8 +197,9 @@ function decodeURIComponent_CPE(s: string): AttributeValue {
       continue
     }
 
-    // Percent-encoded sequences
-    const form = s.substring(idx, idx + 3)
+    // Percent-encoded sequences. Hex digits are case-insensitive (RFC 3986),
+    // so lowercase only the lookup form — not the surrounding content.
+    const form = s.substring(idx, idx + 3).toLowerCase()
     if (form === '%01') {
       // Decode %01 to unquoted ? (only valid at begin/end)
       result += '?'
@@ -223,15 +229,15 @@ function decodeURIComponent_CPE(s: string): AttributeValue {
 /**
  * Unpack a packed edition component into individual WFN attributes.
  */
-function unpack(s: string, wfn: WFN): void {
+function unpack(s: string, wfn: WFN, preserveCase: boolean): void {
   // Format: ~ed~sw_ed~t_sw~t_hw~oth
   // Skip leading ~
   const parts = s.substring(1).split('~')
   while (parts.length < 5) parts.push('')
 
-  wfn.edition = decodeURIComponent_CPE(parts[0])
-  wfn.swEdition = decodeURIComponent_CPE(parts[1])
-  wfn.targetSw = decodeURIComponent_CPE(parts[2])
-  wfn.targetHw = decodeURIComponent_CPE(parts[3])
-  wfn.other = decodeURIComponent_CPE(parts[4])
+  wfn.edition = decodeURIComponent_CPE(parts[0], preserveCase)
+  wfn.swEdition = decodeURIComponent_CPE(parts[1], preserveCase)
+  wfn.targetSw = decodeURIComponent_CPE(parts[2], preserveCase)
+  wfn.targetHw = decodeURIComponent_CPE(parts[3], preserveCase)
+  wfn.other = decodeURIComponent_CPE(parts[4], preserveCase)
 }
