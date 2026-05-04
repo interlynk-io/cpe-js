@@ -30,10 +30,33 @@ describe('parse formatted string', () => {
     expect(wfn.product).toBe('big\\$money_2010')
   })
 
-  it('is case-insensitive', () => {
-    const wfn = parse('cpe:2.3:A:Microsoft:Internet_Explorer:8.0:*:*:*:*:*:*:*')
-    // part should be lowercased, but we store raw from the FS binding
+  it('preserves case in attribute values by default', () => {
+    const wfn = parse('cpe:2.3:a:Microsoft:Internet_Explorer:8.0.6001:Beta:*:*:*:*:*:*')
     expect(wfn.part).toBe('a')
+    expect(wfn.vendor).toBe('Microsoft')
+    expect(wfn.product).toBe('Internet_Explorer')
+    expect(wfn.version).toBe('8\\.0\\.6001')
+    expect(wfn.update).toBe('Beta')
+  })
+
+  it('always normalizes part to lowercase', () => {
+    const wfn = parse('cpe:2.3:A:Microsoft:Internet_Explorer:8.0:*:*:*:*:*:*:*')
+    expect(wfn.part).toBe('a')
+    expect(wfn.vendor).toBe('Microsoft')
+  })
+
+  it('lowercases everything when preserveCase is false', () => {
+    const wfn = parse('cpe:2.3:a:Microsoft:Internet_Explorer:8.0.6001:Beta:*:*:*:*:*:*', {
+      preserveCase: false,
+    })
+    expect(wfn.vendor).toBe('microsoft')
+    expect(wfn.product).toBe('internet_explorer')
+    expect(wfn.update).toBe('beta')
+  })
+
+  it('round-trips formatted string preserving case', () => {
+    const original = 'cpe:2.3:a:Microsoft:Internet_Explorer:8.0.6001:Beta:*:*:*:*:*:*'
+    expect(encode(parse(original))).toBe(original)
   })
 
   it('pads missing trailing fields with ANY', () => {
@@ -107,6 +130,30 @@ describe('parse URI', () => {
   it('treats hyphen as NA', () => {
     const wfn = parse('cpe:/a:hp:openview_network_manager:7.51:-')
     expect(wfn.update).toBe(NA)
+  })
+
+  it('preserves case in URI components by default', () => {
+    const wfn = parse('cpe:/a:Microsoft:Internet_Explorer:8.0.6001:Beta')
+    expect(wfn.part).toBe('a')
+    expect(wfn.vendor).toBe('Microsoft')
+    expect(wfn.product).toBe('Internet_Explorer')
+    expect(wfn.update).toBe('Beta')
+  })
+
+  it('lowercases URI components when preserveCase is false', () => {
+    const wfn = parse('cpe:/a:Microsoft:Internet_Explorer:8.0.6001:Beta', {
+      preserveCase: false,
+    })
+    expect(wfn.vendor).toBe('microsoft')
+    expect(wfn.product).toBe('internet_explorer')
+    expect(wfn.update).toBe('beta')
+  })
+
+  it('decodes uppercase percent-encoded hex while preserving content case', () => {
+    // %2A and %2a both decode to backslash-asterisk; surrounding case is kept.
+    const wfn = parse('cpe:/a:Vendor:Pro%2Aduct')
+    expect(wfn.vendor).toBe('Vendor')
+    expect(wfn.product).toBe('Pro\\*duct')
   })
 })
 

@@ -86,6 +86,14 @@ describe('matchesAny', () => {
     expect(matchesAny(source, targets)).toBe(true)
   })
 
+  it('matches case-insensitively even when parse preserves case', () => {
+    const upper = parse('cpe:2.3:a:Microsoft:Internet_Explorer:8.0:*:*:*:*:*:*:*')
+    const lower = parse('cpe:2.3:a:microsoft:internet_explorer:8.0:*:*:*:*:*:*:*')
+    expect(upper.vendor).toBe('Microsoft')
+    expect(lower.vendor).toBe('microsoft')
+    expect(isEqual(upper, lower)).toBe(true)
+  })
+
   it('returns false when no match', () => {
     const source = parse('cpe:2.3:a:adobe:reader:*:*:*:*:*:*:*:*')
     const targets = [

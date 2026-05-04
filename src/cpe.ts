@@ -4,19 +4,28 @@
 
 import { ANY, NA, type AttributeValue, type Part, type WFN } from './types.js'
 import { createWFN } from './wfn.js'
-import { bindToFormattedString, unbindFormattedString } from './fs-binding.js'
+import { bindToFormattedString, unbindFormattedString, type UnbindOptions } from './fs-binding.js'
 import { bindToURI, unbindURI } from './uri-binding.js'
+
+/** Options for {@link parse} and {@link mustParse}. */
+export type ParseOptions = UnbindOptions
 
 /**
  * Parse a CPE string (auto-detects formatted string vs URI).
+ *
+ * By default, attribute values keep their original case. The `part`
+ * attribute is always normalized to lowercase since it is enum-valued
+ * ('a', 'o', 'h'). Pass `{ preserveCase: false }` for the legacy
+ * lowercase-everything behavior. Matching is case-insensitive regardless
+ * (see compareAttribute in match.ts).
  */
-export function parse(s: string): WFN {
+export function parse(s: string, opts: ParseOptions = {}): WFN {
   const trimmed = s.trim()
   if (trimmed.startsWith('cpe:2.3:')) {
-    return unbindFormattedString(trimmed)
+    return unbindFormattedString(trimmed, opts)
   }
   if (trimmed.startsWith('cpe:/')) {
-    return unbindURI(trimmed)
+    return unbindURI(trimmed, opts)
   }
   throw new Error(`Unrecognized CPE format: "${trimmed}"`)
 }
@@ -59,6 +68,6 @@ export function val(s: string): AttributeValue {
 /**
  * Like parse() but throws on error. Use for known-good compile-time constants.
  */
-export function mustParse(s: string): WFN {
-  return parse(s)
+export function mustParse(s: string, opts: ParseOptions = {}): WFN {
+  return parse(s, opts)
 }
